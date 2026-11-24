@@ -1,7 +1,8 @@
 #pragma once
 
 #include"Poller.h"
-
+#include"TriggerEvent.h"
+#include<vector>
 class EventScheduler{
 
 public:
@@ -14,8 +15,16 @@ public:
 
     void loop();
 
+    bool addTriggerEvent(TriggerEvent* event);
+    void handleTriggerEvent();
+    Poller* getPoller();
+
 
 private:
     bool mQuit{false};
     Poller* mPoller{nullptr};
+
+    std::vector<TriggerEvent*> mTriggerEvents;
+
+
 };
