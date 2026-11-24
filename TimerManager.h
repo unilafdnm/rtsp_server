@@ -1,11 +1,10 @@
 #pragma once
 
-#include<EventScheduler.h>
 #include<cstdint>
 #include<map>
 class Poller;
 class Timer;
-
+class EventSchedule;
 class IOEvent;
 class TimerEvent;
 

@@ -2,7 +2,11 @@
 
 #include"Poller.h"
 #include"TriggerEvent.h"
+#include"Timer.h"
 #include<vector>
+
+class TimerManager;
+
 class EventScheduler{
 
 public:
@@ -20,11 +24,21 @@ public:
     Poller* getPoller();
 
 
+    //定时任务接口
+
+    Timer::TimerId addTimedEventRunAfter(TimerEvent* event,Timer::TimeInterval delay);
+    Timer::TimerId addTimedEventRunAt(TimerEvent* event,Timer::TimeStamp when);
+
+    Timer::TimerId addTimedEventRunEvery(TimerEvent* event,Timer::TimeInterval interval);
+
+    bool removeTimedVent(Timer::TimerId timerId);
+
+
 private:
     bool mQuit{false};
     Poller* mPoller{nullptr};
 
     std::vector<TriggerEvent*> mTriggerEvents;
 
-
+    TimerManager* mTimerManager{nullptr};
 };
