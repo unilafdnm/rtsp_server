@@ -11,6 +11,14 @@
 #include <stdexcept>
 #include <system_error>
 
+TimerManager* TimerManager::createNew(EventScheduler* scheduler){
+
+    if(!scheduler){
+        return nullptr;
+    }
+
+    return new TimerManager(scheduler);
+}
 
 static bool timerFdSetTime(int fd,Timer::TimeStamp when,Timer::TimeInterval period){
 
@@ -20,7 +28,7 @@ static bool timerFdSetTime(int fd,Timer::TimeStamp when,Timer::TimeInterval peri
     newVal.it_value.tv_nsec=(when%1000)*1000000;
 
     newVal.it_interval.tv_sec=period/1000;
-    newVal.it_interval.tv_nsec=(when%1000)*1000000;
+    newVal.it_interval.tv_nsec=(period%1000)*1000000;
 
     int ret=timerfd_settime(fd,TFD_TIMER_ABSTIME,&newVal,nullptr);
     return ret == 0;
@@ -60,11 +68,11 @@ TimerManager::~TimerManager(){
 
 TimerManager::TimerId TimerManager::addTimer(TimerEvent* event,TimeStamp timestamp,TimeInterval interval){
 
-    if(!event || timestamp < 0){
+    if(!event || timestamp <= 0){
         return 0;
     }
 
-    if(mLastTimerId > UINT32_MAX){
+    if(mLastTimerId == UINT32_MAX){
         return 0;
     }
 
@@ -131,8 +139,13 @@ void TimerManager::handleRead(){
             if(isStop){
                 mTimers.erase(timer.mTimerId);
             }else{
-                timer.mTimeStamp=now+timer.mTimeInterval;
-                mEvents.emplace(timer.mTimeStamp,timer);
+
+                auto timerIt=mTimers.find(timer.mTimerId);
+                if(timerIt != mTimers.end()){
+                    timer.mTimeStamp=now+timer.mTimeInterval;
+                    mEvents.emplace(timer.mTimeStamp,timer);
+                    timerIt->second=timer;
+                }
             }
         }else{
             mTimers.erase(timer.mTimerId);
