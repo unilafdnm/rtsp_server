@@ -8,15 +8,17 @@ EventScheduler::EventScheduler(){
 }
 EventScheduler::~EventScheduler(){
 
+    if(mTimerManager){
+        delete mTimerManager;
+        mTimerManager=nullptr;
+    }
+
     if(mPoller){
         delete mPoller;
         mPoller=nullptr;
     }
 
-    if(mTimerManager){
-        delete mTimerManager;
-        mTimerManager=nullptr;
-    }
+
 
 }
 

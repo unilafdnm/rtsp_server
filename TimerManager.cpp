@@ -158,7 +158,6 @@ void TimerManager::handleRead(){
 
 void TimerManager::modifyTimeout(){
 
-    struct itimerspec ts{};
 
     if(!mEvents.empty()){
         Timer timer=mEvents.begin()->second;
