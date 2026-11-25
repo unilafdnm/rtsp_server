@@ -3,6 +3,10 @@
 #include<sys/socket.h>
 #include<unistd.h>
 
+const int Buffer::initialiSize = 1024;
+const char* Buffer::KCRLF = "\r\n";
+
+
 Buffer::Buffer()
     :mBufferSize(initialiSize),mReadIndex(0),mWriteIndexl(0)
 {
@@ -46,7 +50,7 @@ const char* Buffer::findCRLF(const char* start)const{
 }
 const char* Buffer::findLastCrlf()const{
 
-    auto result=std::search(peek(),beginWrite(),KCRLF,KCRLF+2);
+    auto result=std::find_end(peek(),beginWrite(),KCRLF,KCRLF+2);
 
     return result == beginWrite() ? nullptr : result;
 }
@@ -87,19 +91,19 @@ const char* Buffer::beginWrite()const{
 }
 
 void Buffer::unwrite(int len){
-    mWriteIndexl+=len;
+    mWriteIndexl-=len;
 }
 void Buffer::ensureWriteableBytes(int len){
-    while(writeableBytes() < len){
+    if(writeableBytes() < len){
         makeSpace(len);
     }
 }
 void Buffer::makeSpace(int len){
 
     if(prependableBytes() + writeableBytes() < len){
-        mBufferSize=2*mWriteIndexl;
+        mBufferSize=mWriteIndexl+len;
         mBuffer=static_cast<char*>(realloc(mBuffer,mBufferSize));
-    }{
+    }else{
         int readSz=readableBytes();
         std::copy(begin()+mReadIndex,begin()+mWriteIndexl,begin());
         mReadIndex=0;
@@ -118,12 +122,7 @@ void Buffer::append(const char* data,int len){
 }
 void Buffer::append(const void* data,int len){
 
-    ensureWriteableBytes(len);
-
-    std::copy(data,data+len,beginWrite());
-
-    mWriteIndexl+=len;
-
+   append(static_cast<const char*>(data), len);
 }
 
 
