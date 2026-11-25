@@ -80,10 +80,10 @@ void Buffer::retrieveAll(){
 }
 
 char* Buffer::beginWrite(){
-    return peek()+mWriteIndexl;
+    return begin()+mWriteIndexl;
 }
 const char* Buffer::beginWrite()const{
-    return peek()+mWriteIndexl;
+    return begin()+mWriteIndexl;
 }
 
 void Buffer::unwrite(int len){
@@ -147,7 +147,15 @@ int Buffer::read(int fd){
         return static_cast<int>(n);
     }
 
-    append(extrabuf,n);
+    if(n <= freeSpace){
+        std::copy(extrabuf,extrabuf+n,beginWrite());
+        mWriteIndexl+=n;
+    }
+    else{
+        std::copy(extrabuf,extrabuf+freeSpace,beginWrite());
+        mWriteIndexl+=freeSpace;
+        append(extrabuf+freeSpace,static_cast<int>(n)-freeSpace);
+    }
     return static_cast<int>(n);
 
 
