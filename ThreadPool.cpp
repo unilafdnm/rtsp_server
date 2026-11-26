@@ -47,11 +47,19 @@ void ThreadPool::createThreads(){
 
 void ThreadPool::canceThreads(){
 
-    std::unique_lock<std::mutex> lock(mMtx);
+    {
+        std::unique_lock<std::mutex> lock(mMtx);
+        mQuit=true;
+    }
+
+    mCon.notify_all();
+    
 
     for(auto& thread:mThreads){
-        thread.detach();
+        thread.join();
     }
+
+    mThreads.clear();
 
 }
 
@@ -67,7 +75,7 @@ ThreadPool::~ThreadPool(){
 }
 
 void ThreadPool::addTask(ThreadPool::Task& task){
-    std::unique_lock<std::mutex> mMtx;
+    std::unique_lock<std::mutex> lock(mMtx);
 
     mTaskQueue.push(std::move(task));
 
@@ -85,7 +93,6 @@ void ThreadPool::loop(){
         });
 
         if(mQuit){
-            canceThreads();
             return;
         }
 
