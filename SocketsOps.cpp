@@ -62,12 +62,12 @@ int sockets::accept(int sockfd){
 
 }
 
-int write(int sockfd,const void* buf,int size){
+int sockets::write(int sockfd,const void* buf,int size){
 
     return ::write(sockfd,buf,size);
 
 }
-int sendto(int sockfd,const void* buf,int len,const struct sockaddr* destAddr){
+int sockets::sendto(int sockfd,const void* buf,int len,const struct sockaddr* destAddr){
 
     return ::sendto(sockfd,buf,len,0,destAddr,sizeof(struct sockaddr_in));
 }
@@ -97,7 +97,7 @@ int sockets::setBlock(int sockfd,int writeTimeout){
 
     struct timeval tv{};
     tv.tv_sec=writeTimeout/1000;
-    tv.tv_usec=(writeTimeout%1000)*1000000;
+    tv.tv_usec=(writeTimeout%1000)*1000;
 
     int ret=setsockopt(sockfd,SOL_SOCKET,SO_SNDTIMEO,&tv,sizeof(tv));
     if(ret<0){
@@ -141,7 +141,7 @@ void sockets::setNonBlockAndCloseOnExec(int sockfd){
 
 void sockets::setReuseAddr(int sockfd, int on){
 
-    int optval=on?0:1;
+    int optval=on?1:0;
 
     setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
 
@@ -184,6 +184,7 @@ void sockets::setRecvBufSize(int sockfd, int size){
 
 std::string sockets::getPeerIp(int sockfd){
 
+
     struct sockaddr_in addr{};
     int ret=getPeerAddr(sockfd,&addr);
     if(ret<0){
@@ -202,15 +203,11 @@ std::string sockets::getPeerIp(int sockfd){
 int16_t sockets::getPeerPort(int sockfd){
 
     struct sockaddr_in addr{};
-    int16_t port=getPeerPort(sockfd);
-
-
-    port=ntohs(port);
-
-    if(port<0){
+    int ret=getPeerAddr(sockfd,&addr);
+    if(ret<0){
         return 0;
     }
-    return port;
+    return ntohs(addr.sin_port);
 
 }
 
