@@ -36,7 +36,7 @@ private:
     static void errorCallback(void* arg);
 
 
-private:
+protected:
     UsageEnvironment* mEnv;
     int mClientFd;
     IOEvent* mClientIOEvent;

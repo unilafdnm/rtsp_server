@@ -63,7 +63,7 @@ void TcpConnection::enableWriteHandling(){
 
 void TcpConnection::disableReadHandling(){
 
-    if(mClientIOEvent->getEvent() & IOEvent::EVENT_READ){
+    if(!(mClientIOEvent->getEvent() & IOEvent::EVENT_READ)){
         return;
     }
 
@@ -73,7 +73,7 @@ void TcpConnection::disableReadHandling(){
 }
 void TcpConnection::disableWriteHandling(){
 
-    if(mClientIOEvent->getEvent() & IOEvent::EVENT_WRITE){
+    if(!(mClientIOEvent->getEvent() & IOEvent::EVENT_WRITE)){
         return;
     }
 
@@ -91,16 +91,10 @@ void TcpConnection::handleRead(){
 
         handleDisConnect();
 
-    }else if(ret==-1){
-        if(ret == EAGAIN || ret == EWOULDBLOCK){
+    }else if(errno == EAGAIN || errno == EWOULDBLOCK ||errno == EINTR){
             return;
-        }else if(ret == EINTR){
-            return;
-        }
-
-    }else{
-        handleDisConnect();
     }
+    handleDisConnect();
 }
 
 
@@ -108,8 +102,7 @@ void TcpConnection::handleWrite(){
 
     while(mOutBuffer.readableBytes() > 0){
 
-        int n=mOutBuffer.write(mClientFd);
-
+        int n=::send(mClientFd,mOutBuffer.peek(),mOutBuffer.readableBytes(),MSG_NOSIGNAL);
         if(n > 0){
             mOutBuffer.retrieve(n);
         }else if(n <0 && errno==EINTR){
@@ -129,11 +122,7 @@ void TcpConnection::handleWrite(){
 }
 void TcpConnection::handleError(){
 
-    mEnv->scheduler()->removeIOEvent(mClientIOEvent);
-
-    delete mClientIOEvent;
-
-    sockets::close(mClientFd);
+    handleDisConnect();
 
 }
 
@@ -157,4 +146,18 @@ void TcpConnection::handleDisConnect()
     if (mDisConnectCallback) {
         mDisConnectCallback(mArg, mClientFd);
     }
+}
+
+
+void TcpConnection::writeCallback(void* arg){
+
+    auto* conn=static_cast<TcpConnection*>(arg);
+    conn->handleWrite();
+
+}
+void TcpConnection::errorCallback(void* arg){
+
+    auto* conn=static_cast<TcpConnection*>(arg);
+    conn->handleError();
+
 }
