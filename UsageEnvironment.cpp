@@ -1,6 +1,6 @@
 #include"UsageEnvironment.h"
 
-UsageEnvironment* UsageEnvironment::createNew(EventScheduler* scheduler,ThreadPool* hhreadPool){
+UsageEnvironment* UsageEnvironment::createNew(EventScheduler* scheduler,ThreadPool* threadPool){
 
     return new UsageEnvironment(scheduler,threadPool);
 
